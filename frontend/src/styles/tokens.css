@@ -1,0 +1,12 @@
+:root {
+  --bitapi-bg: #f5f7fb;
+  --bitapi-panel: #ffffff;
+  --bitapi-border: #e5e8ef;
+  --bitapi-text: #1d2129;
+  --bitapi-muted: #6b7785;
+  --bitapi-brand: #165dff;
+  --bitapi-success: #00b42a;
+  --bitapi-warning: #ff7d00;
+  --bitapi-danger: #f53f3f;
+  --bitapi-radius: 8px;
+}
