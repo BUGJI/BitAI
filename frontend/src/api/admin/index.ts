@@ -73,6 +73,15 @@ export const adminApi = {
   upsertSetting(payload: Pick<Setting, 'key' | 'value' | 'is_public'>) {
     return unwrap<Setting>(apiClient.post('/admin/settings', payload));
   },
+  uploadBrandingAsset(file: File) {
+    const form = new FormData();
+    form.append('file', file);
+    return unwrap<{ url: string }>(
+      apiClient.post('/admin/branding/upload', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+    );
+  },
   orders() {
     return unwrap<PaymentOrder[]>(apiClient.get('/admin/orders'));
   },

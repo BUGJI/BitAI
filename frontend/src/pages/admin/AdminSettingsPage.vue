@@ -73,6 +73,18 @@ const smtpForm = reactive({
   from_name: 'BitAPI',
   encryption: 'starttls'
 });
+const brandForm = reactive({
+  name: 'BitAPI',
+  logoUrl: '',
+  logoDarkUrl: '',
+  logoCollapsedUrl: '',
+  copyright: 'Copyright © 2026 BitAPI. All rights reserved.'
+});
+const uploadingBrand = reactive({
+  logoUrl: false,
+  logoDarkUrl: false,
+  logoCollapsedUrl: false
+});
 const moduleForm = reactive({
   portal: true,
   register: true,
@@ -377,6 +389,15 @@ function syncSMTPForm() {
   smtpForm.encryption = settingValue('smtp.encryption', 'starttls');
 }
 
+function syncBrandForm() {
+  const footerValue = parseFooter(settingValue('portal.footer'));
+  brandForm.name = settingValue('site.name', 'BitAPI');
+  brandForm.logoUrl = settingValue('site.logo_url');
+  brandForm.logoDarkUrl = settingValue('site.logo_dark_url');
+  brandForm.logoCollapsedUrl = settingValue('site.logo_collapsed_url');
+  brandForm.copyright = settingValue('site.copyright', footerValue.copyright);
+}
+
 function syncModuleForm() {
   moduleForm.portal = settingValue('module.portal.enabled', 'true') === 'true';
   moduleForm.register = settingValue('module.auth.register.enabled', 'true') === 'true';
@@ -437,6 +458,7 @@ async function load() {
   loading.value = true;
   try {
     rows.value = await adminApi.settings();
+    syncBrandForm();
     syncSMTPForm();
     syncModuleForm();
     syncPortalForm();
@@ -561,6 +583,38 @@ async function save() {
   }
 }
 
+async function saveBrand() {
+  portalFooter.copyright = brandForm.copyright;
+  await saveItems([
+    ['site.name', brandForm.name.trim() || 'BitAPI', true],
+    ['site.logo_url', brandForm.logoUrl.trim(), true],
+    ['site.logo_dark_url', brandForm.logoDarkUrl.trim(), true],
+    ['site.logo_collapsed_url', brandForm.logoCollapsedUrl.trim(), true],
+    ['site.copyright', brandForm.copyright.trim(), true],
+    ['portal.footer', JSON.stringify(normalizeFooter(portalFooter)), true]
+  ], '品牌配置已保存');
+}
+
+function uploadBranding(field: 'logoUrl' | 'logoDarkUrl' | 'logoCollapsedUrl') {
+  return (option: any) => {
+    uploadingBrand[field] = true;
+    void (async () => {
+      try {
+        const result = await adminApi.uploadBrandingAsset(option.fileItem?.file || option.file);
+        brandForm[field] = result.url;
+        Message.success('品牌图片已上传');
+        option.onSuccess?.(result);
+      } catch (error: any) {
+        Message.error(error?.response?.data?.message || '上传品牌图片失败');
+        option.onError?.(error);
+      } finally {
+        uploadingBrand[field] = false;
+      }
+    })();
+    return { abort() {} };
+  };
+}
+
 async function saveSMTP() {
   saving.value = true;
   try {
@@ -609,6 +663,7 @@ async function savePortal() {
     ['portal.nav', JSON.stringify(portalNav.value.map(normalizeNavItem)), true],
     ['portal.metrics', JSON.stringify(portalMetrics.value.map(normalizeMetric)), true],
     ['portal.sections', JSON.stringify(portalSections.value.map(compactSection)), true],
+    ['site.copyright', portalFooter.copyright, true],
     ['portal.footer', JSON.stringify(normalizeFooter(portalFooter)), true],
     ['portal.features', '[]', true]
   ], '展示页配置已保存');
@@ -678,6 +733,83 @@ onMounted(load);
         <a-button type="primary" :loading="saving" @click="saveModules">
           <template #icon><icon-save /></template>
           保存模块配置
+        </a-button>
+      </a-form>
+    </a-card>
+
+    <a-card title="产品品牌配置" :bordered="false">
+      <a-form layout="vertical" :model="brandForm">
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-form-item label="站点名称">
+              <a-input v-model="brandForm.name" placeholder="例如 FitAI、AaaAI" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="16">
+            <a-form-item label="版权信息">
+              <a-input v-model="brandForm.copyright" placeholder="Copyright © 2026 YourBrand. All rights reserved." />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="浅色 Logo 地址">
+              <a-input v-model="brandForm.logoUrl" placeholder="/uploads/branding/logo.svg 或 https://...">
+                <template #append>
+                  <a-upload :show-file-list="false" accept="image/svg+xml,image/png,image/jpeg,image/gif,image/webp,image/x-icon" :custom-request="uploadBranding('logoUrl')">
+                    <template #upload-button>
+                      <a-button :loading="uploadingBrand.logoUrl"><template #icon><icon-upload /></template>上传</a-button>
+                    </template>
+                  </a-upload>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="深色 Logo 地址">
+              <a-input v-model="brandForm.logoDarkUrl" placeholder="用于深色底边栏">
+                <template #append>
+                  <a-upload :show-file-list="false" accept="image/svg+xml,image/png,image/jpeg,image/gif,image/webp,image/x-icon" :custom-request="uploadBranding('logoDarkUrl')">
+                    <template #upload-button>
+                      <a-button :loading="uploadingBrand.logoDarkUrl"><template #icon><icon-upload /></template>上传</a-button>
+                    </template>
+                  </a-upload>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item label="侧边栏收缩 Logo 地址">
+              <a-input v-model="brandForm.logoCollapsedUrl" placeholder="建议使用方形图标">
+                <template #append>
+                  <a-upload :show-file-list="false" accept="image/svg+xml,image/png,image/jpeg,image/gif,image/webp,image/x-icon" :custom-request="uploadBranding('logoCollapsedUrl')">
+                    <template #upload-button>
+                      <a-button :loading="uploadingBrand.logoCollapsedUrl"><template #icon><icon-upload /></template>上传</a-button>
+                    </template>
+                  </a-upload>
+                </template>
+              </a-input>
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <div class="brand-preview-grid">
+          <div class="brand-preview">
+            <span>浅色 Logo</span>
+            <img v-if="brandForm.logoUrl" :src="brandForm.logoUrl" :alt="brandForm.name" />
+            <strong v-else>{{ brandForm.name }}</strong>
+          </div>
+          <div class="brand-preview brand-preview-dark">
+            <span>深色 Logo</span>
+            <img v-if="brandForm.logoDarkUrl" :src="brandForm.logoDarkUrl" :alt="brandForm.name" />
+            <strong v-else>{{ brandForm.name }}</strong>
+          </div>
+          <div class="brand-preview">
+            <span>收缩 Logo</span>
+            <img v-if="brandForm.logoCollapsedUrl" class="brand-preview-icon" :src="brandForm.logoCollapsedUrl" :alt="brandForm.name" />
+            <strong v-else>{{ brandForm.name.slice(0, 1) }}</strong>
+          </div>
+        </div>
+        <a-button type="primary" :loading="saving" @click="saveBrand">
+          <template #icon><icon-save /></template>
+          保存品牌配置
         </a-button>
       </a-form>
     </a-card>
@@ -905,7 +1037,7 @@ onMounted(load);
 
           <a-tab-pane key="footer" title="底边栏">
             <a-row :gutter="16">
-              <a-col :span="12"><a-form-item label="版权信息"><a-input v-model="portalFooter.copyright" /></a-form-item></a-col>
+              <a-col :span="12"><a-form-item label="版权信息"><a-input v-model="portalFooter.copyright" @change="brandForm.copyright = portalFooter.copyright" /></a-form-item></a-col>
               <a-col :span="12"><a-form-item label="二维码标题"><a-input v-model="portalFooter.qrcodeTitle" /></a-form-item></a-col>
               <a-col :span="12"><a-form-item label="二维码描述"><a-input v-model="portalFooter.qrcodeDescription" /></a-form-item></a-col>
               <a-col :span="12"><a-form-item label="二维码图片地址"><a-input v-model="portalFooter.qrcodeImage" /></a-form-item></a-col>
@@ -1141,6 +1273,50 @@ onMounted(load);
   align-items: flex-end;
   justify-content: flex-end;
   padding-bottom: 20px;
+}
+
+.brand-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.brand-preview {
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--bitapi-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.brand-preview-dark {
+  color: #fff;
+  background: #111827;
+}
+
+.brand-preview span {
+  color: var(--bitapi-muted);
+  font-size: 12px;
+}
+
+.brand-preview-dark span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.brand-preview img {
+  width: 160px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.brand-preview .brand-preview-icon {
+  width: 34px;
+  height: 34px;
 }
 
 .editor-toolbar,

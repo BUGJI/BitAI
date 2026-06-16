@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Message } from '@arco-design/web-vue';
 import { authApi } from '../../api/auth';
 import { useAuthStore } from '../../stores/auth';
+import { usePublicConfigStore } from '../../stores/publicConfig';
 
 const router = useRouter();
 const auth = useAuthStore();
+const config = usePublicConfigStore();
 const loading = ref(false);
 const captchaImage = ref('');
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
 const form = reactive({
   email: '',
   password: '',
@@ -43,7 +46,7 @@ onMounted(refreshCaptcha);
 <template>
   <div>
     <h2 class="title">登录</h2>
-    <p class="subtitle">使用 BitAPI 账号管理密钥、路由和调用明细。</p>
+    <p class="subtitle">使用 {{ siteName }} 账号管理密钥、路由和调用明细。</p>
     <a-form layout="vertical" :model="form" @submit-success="submit">
       <a-form-item field="email" label="邮箱" required>
         <a-input v-model="form.email" autocomplete="off" />

@@ -2,9 +2,11 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { Message, Modal } from '@arco-design/web-vue';
 import { userApi } from '../../api/user';
+import { usePublicConfigStore } from '../../stores/publicConfig';
 import type { APIKey } from '../../types';
 import { statusLabel } from '../../utils/display';
 
+const config = usePublicConfigStore();
 const loading = ref(false);
 const creating = ref(false);
 const keys = ref<APIKey[]>([]);
@@ -13,6 +15,7 @@ const newKey = ref('');
 const gatewayBaseURL = computed(() => window.location.origin);
 const openAIBaseURL = computed(() => `${gatewayBaseURL.value}/v1`);
 const responsesURL = computed(() => `${gatewayBaseURL.value}/responses`);
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
 const form = reactive({
   name: '',
   group_id: undefined as number | undefined,
@@ -86,7 +89,7 @@ function shellScript(record: APIKey) {
     'model = "gpt-4.1-mini"',
     '',
     '[model_providers.bitapi]',
-    'name = "BitAPI"',
+    `name = "${siteName.value}"`,
     'wire_api = "responses"',
     'requires_openai_auth = true',
     `base_url = "${gatewayBaseURL.value}"`,
@@ -98,7 +101,7 @@ function shellScript(record: APIKey) {
     '}',
     'EOF',
     '',
-    `echo 'Codex 已配置到 BitAPI：${shellValue(gatewayBaseURL.value)}'`
+    `echo 'Codex 已配置到 ${shellValue(siteName.value)}：${shellValue(gatewayBaseURL.value)}'`
   ].join('\n');
 }
 
@@ -117,7 +120,7 @@ function batchScript(record: APIKey) {
     '>> "%CODEX_HOME%\\config.toml" echo model = "gpt-4.1-mini"',
     '>> "%CODEX_HOME%\\config.toml" echo.',
     '>> "%CODEX_HOME%\\config.toml" echo [model_providers.bitapi]',
-    '>> "%CODEX_HOME%\\config.toml" echo name = "BitAPI"',
+    `>> "%CODEX_HOME%\\config.toml" echo name = "${siteName.value}"`,
     '>> "%CODEX_HOME%\\config.toml" echo wire_api = "responses"',
     '>> "%CODEX_HOME%\\config.toml" echo requires_openai_auth = true',
     `>> "%CODEX_HOME%\\config.toml" echo base_url = "${gatewayBaseURL.value}"`,
@@ -126,7 +129,7 @@ function batchScript(record: APIKey) {
     `>> "%CODEX_HOME%\\auth.json" echo   "OPENAI_API_KEY": "${key}"`,
     '>> "%CODEX_HOME%\\auth.json" echo }',
     '',
-    `echo Codex 已配置到 BitAPI：${gatewayBaseURL.value}`,
+    `echo Codex 已配置到 ${siteName.value}：${gatewayBaseURL.value}`,
     'endlocal'
   ].join('\r\n');
 }

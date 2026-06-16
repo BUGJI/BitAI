@@ -3,6 +3,7 @@
   [string]$AdminEmail = "",
   [string]$AdminName = "",
   [string]$AdminPassword = "",
+  [string]$AppName = "",
   [string]$HttpAddr = ""
 )
 
@@ -91,11 +92,14 @@ if (-not $Force) {
   }
 }
 
+if ([string]::IsNullOrWhiteSpace($AppName)) {
+  $AppName = Read-Required "请输入站点/产品名称" "BitAPI"
+}
 if ([string]::IsNullOrWhiteSpace($AdminEmail)) {
   $AdminEmail = Read-Required "请输入管理员账号邮箱" "admin@bitapi.local"
 }
 if ([string]::IsNullOrWhiteSpace($AdminName)) {
-  $AdminName = Read-Required "请输入管理员名称" "BitAPI 管理员"
+  $AdminName = Read-Required "请输入管理员名称" "$AppName 管理员"
 }
 if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
   $AdminPassword = Read-PlainPassword "请输入管理员密码，输入过程会直接显示，请认真核对"
@@ -118,7 +122,7 @@ $jwtSecret = New-Secret 48
 $encryptionKey = New-Secret 32
 
 $envLines = @()
-$envLines += "BITAPI_APP_NAME=BitAPI"
+$envLines += "BITAPI_APP_NAME=$AppName"
 $envLines += "BITAPI_ENV=production"
 $envLines += "BITAPI_HTTP_ADDR=$HttpAddr"
 $envLines += "BITAPI_DATABASE_DSN=file:data/bitapi.db?_foreign_keys=on&_busy_timeout=5000"

@@ -25,6 +25,9 @@ const profileForm = reactive({
 });
 const userName = computed(() => auth.user?.display_name || auth.user?.email || '用户');
 const avatarText = computed(() => userName.value.slice(0, 1).toUpperCase());
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
+const sidebarLogo = computed(() => config.text('site.logo_url', '') || bitaiLogo);
+const collapsedLogo = computed(() => config.text('site.logo_collapsed_url', '') || yunLogo);
 
 function go(key: string | number) {
   router.push(String(key));
@@ -81,7 +84,7 @@ function uploadAvatar(option: any) {
     <a-layout-sider v-model:collapsed="collapsed" :width="282" collapsible breakpoint="lg">
       <div class="side-brand">
         <button class="side-logo-button" type="button" @click="router.push('/')">
-          <img :class="collapsed ? 'side-logo side-logo-collapsed' : 'side-logo'" :src="collapsed ? yunLogo : bitaiLogo" alt="BitAPI" />
+          <img :class="collapsed ? 'side-logo side-logo-collapsed' : 'side-logo'" :src="collapsed ? collapsedLogo : sidebarLogo" :alt="siteName" />
         </button>
       </div>
       <a-menu :selected-keys="selected" @menu-item-click="go">

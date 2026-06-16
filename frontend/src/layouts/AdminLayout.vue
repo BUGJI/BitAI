@@ -4,6 +4,7 @@ import { Message } from '@arco-design/web-vue';
 import { useRoute, useRouter } from 'vue-router';
 import { userApi } from '../api/user';
 import { useAuthStore } from '../stores/auth';
+import { usePublicConfigStore } from '../stores/publicConfig';
 import { roleLabel } from '../utils/display';
 import bitaiLogo from '../assets/bitai.svg';
 import yunLogo from '../assets/yun.svg';
@@ -11,6 +12,7 @@ import yunLogo from '../assets/yun.svg';
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const config = usePublicConfigStore();
 const selected = computed(() => [route.path]);
 const currentTitle = computed(() => String(route.meta.title || '概览'));
 const currentPath = computed(() => route.path);
@@ -24,6 +26,9 @@ const profileForm = reactive({
 });
 const userName = computed(() => auth.user?.display_name || auth.user?.email || '用户');
 const avatarText = computed(() => userName.value.slice(0, 1).toUpperCase());
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
+const sidebarLogo = computed(() => config.text('site.logo_url', '') || bitaiLogo);
+const collapsedLogo = computed(() => config.text('site.logo_collapsed_url', '') || yunLogo);
 
 function go(key: string | number) {
   router.push(String(key));
@@ -75,7 +80,7 @@ function uploadAvatar(option: any) {
     <a-layout-sider v-model:collapsed="collapsed" :width="282" collapsible breakpoint="lg">
       <div class="admin-brand">
         <button class="admin-logo-button" type="button" @click="router.push('/')">
-          <img :class="collapsed ? 'admin-logo admin-logo-collapsed' : 'admin-logo'" :src="collapsed ? yunLogo : bitaiLogo" alt="BitAPI" />
+          <img :class="collapsed ? 'admin-logo admin-logo-collapsed' : 'admin-logo'" :src="collapsed ? collapsedLogo : sidebarLogo" :alt="siteName" />
         </button>
       </div>
       <a-menu :selected-keys="selected" @menu-item-click="go">

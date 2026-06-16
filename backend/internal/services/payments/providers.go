@@ -234,15 +234,16 @@ func buildEPayURL(settings providerSettings, order models.PaymentOrder) (string,
 	if gateway == "" || pid == "" || key == "" {
 		return "", ErrPaymentConfig
 	}
+	productName := siteName(settings)
 	params := map[string]string{
 		"pid":          pid,
 		"type":         "alipay",
 		"out_trade_no": order.OrderNo,
 		"notify_url":   notifyURL(settings, ProviderEPay),
 		"return_url":   returnURL(settings),
-		"name":         "BitAPI 余额充值",
+		"name":         productName + " 余额充值",
 		"money":        yuanAmount(settings, order.AmountMicros),
-		"sitename":     "BitAPI",
+		"sitename":     productName,
 	}
 	params["sign"] = md5Sign(params, key, []string{"sign", "sign_type"})
 	params["sign_type"] = "MD5"
@@ -279,6 +280,7 @@ func createXunhuPay(settings providerSettings, order models.PaymentOrder) (strin
 	if gateway == "" || appID == "" || secret == "" {
 		return "", "", ErrPaymentConfig
 	}
+	productName := siteName(settings)
 	params := map[string]string{
 		"version":        "1.1",
 		"lang":           "zh-cn",
@@ -287,7 +289,7 @@ func createXunhuPay(settings providerSettings, order models.PaymentOrder) (strin
 		"trade_order_id": order.OrderNo,
 		"payment":        "alipay",
 		"total_fee":      yuanAmount(settings, order.AmountMicros),
-		"title":          "BitAPI 余额充值",
+		"title":          productName + " 余额充值",
 		"time":           strconv.FormatInt(time.Now().Unix(), 10),
 		"notify_url":     notifyURL(settings, ProviderXunhuPay),
 		"return_url":     returnURL(settings),
@@ -325,7 +327,7 @@ func createAlipayF2F(settings providerSettings, order models.PaymentOrder) (stri
 	bizContent, _ := json.Marshal(map[string]any{
 		"out_trade_no": order.OrderNo,
 		"total_amount": yuanAmount(settings, order.AmountMicros),
-		"subject":      "BitAPI 余额充值",
+		"subject":      siteName(settings) + " 余额充值",
 	})
 	params := map[string]string{
 		"app_id":      appID,
@@ -384,7 +386,7 @@ func createWechatNative(settings providerSettings, order models.PaymentOrder) (s
 	reqBody := map[string]any{
 		"appid":        appID,
 		"mchid":        mchID,
-		"description":  "BitAPI 余额充值",
+		"description":  siteName(settings) + " 余额充值",
 		"out_trade_no": order.OrderNo,
 		"notify_url":   notifyURL(settings, ProviderWechatNative),
 		"amount": map[string]any{
@@ -541,6 +543,14 @@ func returnURL(settings providerSettings) string {
 		return value
 	}
 	return "http://localhost:8091/billing"
+}
+
+func siteName(settings providerSettings) string {
+	name := strings.TrimSpace(settings["site.name"])
+	if name == "" {
+		return "BitAPI"
+	}
+	return name
 }
 
 func yuanAmount(settings providerSettings, micros int64) string {

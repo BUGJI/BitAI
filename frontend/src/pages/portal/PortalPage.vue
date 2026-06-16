@@ -160,6 +160,9 @@ const primaryText = computed(() => config.text('portal.hero.primary_text', '进�
 const secondaryText = computed(() => config.text('portal.hero.secondary_text', '创建账号'));
 const primaryTarget = computed(() => config.text('portal.hero.primary_target', ''));
 const secondaryTarget = computed(() => config.text('portal.hero.secondary_target', '/auth/register'));
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
+const siteLogo = computed(() => config.text('site.logo_url', '') || bitaiLogo);
+const siteDarkLogo = computed(() => config.text('site.logo_dark_url', '') || bitwhiteLogo);
 const registerEnabled = computed(() => config.enabled('module.auth.register.enabled', true));
 const userName = computed(() => auth.user?.display_name || auth.user?.email || '');
 const avatarText = computed(() => (userName.value || '用').slice(0, 1).toUpperCase());
@@ -168,6 +171,7 @@ const navItems = computed<PortalNavItem[]>(() => parseList(config.settings['port
 const metrics = computed<PortalMetric[]>(() => parseList(config.settings['portal.metrics'], defaultMetrics));
 const sections = computed<PortalSection[]>(() => parseList(config.settings['portal.sections'], defaultSections));
 const footer = computed<PortalFooter>(() => parseObject(config.settings['portal.footer'], defaultFooter));
+const siteCopyright = computed(() => config.text('site.copyright', footer.value.copyright));
 
 function parseList<T>(raw: string | undefined, fallback: T[]) {
   if (!raw) return fallback;
@@ -302,7 +306,7 @@ onMounted(async () => {
     <header class="portal-nav">
       <div class="nav-inner">
         <button class="brand-button" type="button" @click="navigate('#top')">
-          <img class="portal-logo" :src="bitaiLogo" alt="BitAPI" />
+          <img class="portal-logo" :src="siteLogo" :alt="siteName" />
         </button>
         <nav class="portal-menu" aria-label="主页导航">
           <button v-for="item in navItems" :key="`${item.label}-${item.target}`" class="nav-link" type="button" @click="navigate(item.target)">
@@ -416,8 +420,8 @@ onMounted(async () => {
     <footer class="portal-footer">
       <div class="footer-inner">
         <div class="footer-brand">
-          <img class="footer-logo" :src="bitwhiteLogo" alt="BitAPI" />
-          <p>{{ footer.copyright }}</p>
+          <img class="footer-logo" :src="siteDarkLogo" :alt="siteName" />
+          <p>{{ siteCopyright }}</p>
         </div>
 
         <div class="footer-column">

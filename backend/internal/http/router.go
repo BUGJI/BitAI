@@ -35,7 +35,7 @@ func NewRouter(db *gorm.DB, cfg config.Config) *gin.Engine {
 		AllowOriginWithContextFunc: func(c *gin.Context, origin string) bool {
 			return allowOrigin(c, origin, cfg.CORSOrigins)
 		},
-		MaxAge:           12 * time.Hour,
+		MaxAge: 12 * time.Hour,
 	}))
 
 	authService := authsvc.New(db, cfg)
@@ -100,6 +100,7 @@ func NewRouter(db *gorm.DB, cfg config.Config) *gin.Engine {
 	admin.GET("/usage", adminHandler.RecentUsage)
 	admin.GET("/settings", adminHandler.Settings)
 	admin.POST("/settings", adminHandler.UpsertSetting)
+	admin.POST("/branding/upload", adminHandler.UploadBrandingAsset)
 	admin.GET("/orders", adminHandler.Orders)
 	admin.POST("/orders/:id/mark-paid", adminHandler.MarkOrderPaid)
 	admin.POST("/orders/:id/reject", adminHandler.RejectOrder)

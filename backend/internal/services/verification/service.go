@@ -60,6 +60,7 @@ type SMTPConfig struct {
 	Password   string
 	FromEmail  string
 	FromName   string
+	SiteName   string
 	Encryption string
 }
 
@@ -125,7 +126,7 @@ func (s *Service) SendEmailCode(input EmailCodeInput) (string, error) {
 	if err := s.db.Create(&item).Error; err != nil {
 		return "", err
 	}
-	if err := sendMail(cfg, email, "BitAPI 注册邮箱验证码", fmt.Sprintf("您的 BitAPI 注册邮箱验证码是：%s\n\n验证码 10 分钟内有效。", code)); err != nil {
+	if err := sendMail(cfg, email, cfg.SiteName+" 注册邮箱验证码", fmt.Sprintf("您的 %s 注册邮箱验证码是：%s\n\n验证码 10 分钟内有效。", cfg.SiteName, code)); err != nil {
 		return "", err
 	}
 	return token, nil
@@ -152,6 +153,7 @@ func (s *Service) SMTPConfig() (SMTPConfig, error) {
 		Password:   values["smtp.password"],
 		FromEmail:  strings.TrimSpace(values["smtp.from_email"]),
 		FromName:   strings.TrimSpace(values["smtp.from_name"]),
+		SiteName:   siteName(values),
 		Encryption: strings.ToLower(strings.TrimSpace(values["smtp.encryption"])),
 	}, nil
 }
@@ -205,8 +207,19 @@ func parseBool(value string) bool {
 	}
 }
 
+func siteName(values map[string]string) string {
+	name := strings.TrimSpace(values["site.name"])
+	if name == "" {
+		return "BitAPI"
+	}
+	return name
+}
+
 func sendMail(cfg SMTPConfig, to, subject, body string) error {
 	fromName := cfg.FromName
+	if fromName == "" {
+		fromName = cfg.SiteName
+	}
 	if fromName == "" {
 		fromName = "BitAPI"
 	}

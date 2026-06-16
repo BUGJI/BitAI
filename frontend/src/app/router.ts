@@ -60,6 +60,8 @@ router.beforeEach(async (to) => {
       publicConfig.loaded = true;
     }
   }
+  const siteName = publicConfig.text('site.name', 'BitAPI');
+  document.title = to.meta.title ? `${String(to.meta.title)} - ${siteName}` : siteName;
   if (to.name === 'portal' && !publicConfig.enabled('module.portal.enabled', true)) {
     return { name: 'login' };
   }

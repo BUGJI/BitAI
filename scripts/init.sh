@@ -12,6 +12,7 @@ FORCE=0
 ADMIN_EMAIL=""
 ADMIN_NAME=""
 ADMIN_PASSWORD=""
+APP_NAME=""
 HTTP_ADDR=""
 
 while [[ $# -gt 0 ]]; do
@@ -30,6 +31,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --admin-password)
       ADMIN_PASSWORD="${2:-}"
+      shift 2
+      ;;
+    --app-name)
+      APP_NAME="${2:-}"
       shift 2
       ;;
     --http-addr)
@@ -146,8 +151,9 @@ if [[ "$FORCE" != "1" ]]; then
   fi
 fi
 
+[[ -n "$APP_NAME" ]] || APP_NAME="$(read_required "请输入站点/产品名称" "BitAPI")"
 [[ -n "$ADMIN_EMAIL" ]] || ADMIN_EMAIL="$(read_required "请输入管理员账号邮箱" "admin@bitapi.local")"
-[[ -n "$ADMIN_NAME" ]] || ADMIN_NAME="$(read_required "请输入管理员名称" "BitAPI 管理员")"
+[[ -n "$ADMIN_NAME" ]] || ADMIN_NAME="$(read_required "请输入管理员名称" "${APP_NAME} 管理员")"
 [[ -n "$ADMIN_PASSWORD" ]] || ADMIN_PASSWORD="$(read_plain_password "请输入管理员密码，输入过程会直接显示，请认真核对")"
 [[ -n "$HTTP_ADDR" ]] || HTTP_ADDR="$(read_required "请输入服务监听地址" ":${BACKEND_PORT}")"
 
@@ -163,7 +169,7 @@ JWT_SECRET="$(new_secret 48)"
 ENCRYPTION_KEY="$(new_secret 32)"
 
 cat > "$ENV_FILE" <<EOF
-BITAPI_APP_NAME=BitAPI
+BITAPI_APP_NAME=$APP_NAME
 BITAPI_ENV=production
 BITAPI_HTTP_ADDR=$HTTP_ADDR
 BITAPI_DATABASE_DSN=file:data/bitapi.db?_foreign_keys=on&_busy_timeout=5000

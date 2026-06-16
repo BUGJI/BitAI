@@ -1,12 +1,18 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { usePublicConfigStore } from '../stores/publicConfig';
 import bitLogo from '../assets/Bit.svg';
+
+const config = usePublicConfigStore();
+const siteName = computed(() => config.text('site.name', 'BitAPI'));
+const authLogo = computed(() => config.text('site.logo_url', '') || bitLogo);
 </script>
 
 <template>
   <main class="auth-shell">
     <section class="auth-copy">
-      <img class="brand-mark" :src="bitLogo" alt="BitAPI" />
-      <h1>BitAPI</h1>
+      <img class="brand-mark" :src="authLogo" :alt="siteName" />
+      <h1>{{ siteName }}</h1>
       <p>统一管理 AI 模型接口的接入、路由、计费与运营。</p>
     </section>
     <section class="auth-panel surface">
@@ -35,10 +41,11 @@ import bitLogo from '../assets/Bit.svg';
 }
 
 .brand-mark {
-  width: 56px;
+  width: 160px;
   height: 56px;
   display: block;
   object-fit: contain;
+  object-position: left center;
 }
 
 .auth-copy h1 {

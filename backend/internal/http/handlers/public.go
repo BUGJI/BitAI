@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	bithttp "bitapi/backend/internal/http/respond"
 	"bitapi/backend/internal/models"
@@ -37,7 +38,7 @@ func (h *PublicHandler) Settings(c *gin.Context) {
 }
 
 func (h *PublicHandler) Health(c *gin.Context) {
-	bithttp.OK(c, gin.H{"status": "正常", "service": "BitAPI"})
+	bithttp.OK(c, gin.H{"status": "正常", "service": h.siteName()})
 }
 
 func (h *PublicHandler) PaymentProviders(c *gin.Context) {
@@ -89,4 +90,14 @@ func stringify(value any) string {
 		payload, _ := json.Marshal(typed)
 		return string(payload)
 	}
+}
+
+func (h *PublicHandler) siteName() string {
+	var setting models.Setting
+	if err := h.db.Where("key = ?", "site.name").First(&setting).Error; err == nil {
+		if name := strings.TrimSpace(setting.Value); name != "" {
+			return name
+		}
+	}
+	return "BitAPI"
 }

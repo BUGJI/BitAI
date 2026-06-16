@@ -1,8 +1,14 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"bitapi/backend/internal/http/middleware"
@@ -505,6 +511,54 @@ func (h *AdminHandler) UpsertSetting(c *gin.Context) {
 		return
 	}
 	bithttp.OK(c, setting)
+}
+
+const maxBrandingAssetBytes = 3 << 20
+
+func (h *AdminHandler) UploadBrandingAsset(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBrandingAssetBytes+1024)
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		bithttp.Fail(c, http.StatusBadRequest, "请选择要上传的品牌图片")
+		return
+	}
+	if fileHeader.Size <= 0 || fileHeader.Size > maxBrandingAssetBytes {
+		bithttp.Fail(c, http.StatusBadRequest, "品牌图片不能超过 3MB")
+		return
+	}
+
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	allowed := map[string]bool{".svg": true, ".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".ico": true}
+	if !allowed[ext] {
+		bithttp.Fail(c, http.StatusBadRequest, "品牌图片仅支持 SVG、PNG、JPG、WEBP、GIF、ICO")
+		return
+	}
+
+	randomPart, err := randomAssetHex(8)
+	if err != nil {
+		bithttp.Fail(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	fileName := fmt.Sprintf("%d-%s%s", time.Now().UnixNano(), randomPart, ext)
+	uploadDir := filepath.Join("data", "uploads", "branding")
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		bithttp.Fail(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	targetPath := filepath.Join(uploadDir, fileName)
+	if err := c.SaveUploadedFile(fileHeader, targetPath); err != nil {
+		bithttp.Fail(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	bithttp.OK(c, gin.H{"url": "/uploads/branding/" + fileName})
+}
+
+func randomAssetHex(size int) (string, error) {
+	buf := make([]byte, size)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
 }
 
 func (h *AdminHandler) Orders(c *gin.Context) {
