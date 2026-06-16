@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (rebuilt in Docker)
+backend/vendor
+frontend/node_modules
+
+# Runtime artifacts
+backend/data
+backend/.env.local
+backend/.server.pid
+frontend/.vite.pid
+frontend/.node_platform
+logs
+*.log
+*.db
+*.db-shm
+*.db-wal
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# IDE
+.vscode
+.claude
+.idea
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.env.example
+.env
+.dockerignore
+docker-init.sh
+
+# Deployment scripts (not needed in image)
+一键初始化.bat
+一键初始化.sh
+一键运行.bat
+一键运行.sh
+scripts
+deploy
+
+# README
+README.md
+LICENSE
